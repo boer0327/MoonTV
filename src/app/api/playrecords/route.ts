@@ -49,7 +49,6 @@ export async function POST(request: NextRequest) {
     };
 
     // await db.savePlayRecord(source, id, recordWithUser);
-    console.log('Saving play record:', { source, id, record: recordWithUser });
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
