@@ -37,3 +37,4 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
 };
 
 export default CapsuleSwitch;
+

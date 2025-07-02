@@ -1,34 +1,10 @@
 /* eslint-disable no-console */
 
+import { PlayRecord, Favorite } from './types';
+
 // storage type 常量: 'localstorage' | 'database'，默认 'localstorage'
-const STORAGE_TYPE =
-  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
-    | 'localstorage'
-    | 'database'
-    | undefined) || 'localstorage';
+const STORAGE_TYPE = 'localstorage';
 
-// 播放记录数据结构
-export interface PlayRecord {
-  title: string;
-  source_name: string;
-  cover: string;
-  index: number; // 第几集
-  total_episodes: number; // 总集数
-  play_time: number; // 播放进度（秒）
-  total_time: number; // 总进度（秒）
-  save_time: number; // 记录保存时间（时间戳）
-  user_id: number; // 用户ID，localStorage情况下全部为0
-}
-
-// 收藏数据结构
-export interface Favorite {
-  source_name: string;
-  total_episodes: number; // 总集数
-  title: string;
-  cover: string;
-  user_id: number; // 用户ID，localStorage情况下全部为0
-  save_time: number; // 记录保存时间（时间戳）
-}
 
 // 存储接口
 export interface IStorage {

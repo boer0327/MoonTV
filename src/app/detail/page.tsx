@@ -2,20 +2,15 @@
 
 'use client';
 
-import { Heart } from 'lucide-react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 import type { PlayRecord } from '@/lib/db.client';
-import {
-  generateStorageKey,
-  getAllPlayRecords,
-  isFavorited,
-  toggleFavorite,
-} from '@/lib/db.client';
+import { generateStorageKey, getAllPlayRecords } from '@/lib/db.client';
 import { type VideoDetail, fetchVideoDetail } from '@/lib/fetchVideoDetail';
 
+import { FavoriteButton } from '@/components/FavoriteButton';
 import PageLayout from '@/components/PageLayout';
 
 function DetailPageClient() {
@@ -24,7 +19,9 @@ function DetailPageClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playRecord, setPlayRecord] = useState<PlayRecord | null>(null);
-  const [favorited, setFavorited] = useState(false);
+  const [activeEpisodeIndex, setActiveEpisodeIndex] = useState<number | null>(
+    null
+  );
   // 是否倒序显示选集
   const [reverseEpisodeOrder, setReverseEpisodeOrder] = useState(false);
 
@@ -66,14 +63,10 @@ function DetailPageClient() {
         // 获取播放记录
         const allRecords = await getAllPlayRecords();
         const key = generateStorageKey(source, id);
-        setPlayRecord(allRecords[key] || null);
-
-        // 检查收藏状态
-        try {
-          const fav = await isFavorited(source, id);
-          setFavorited(fav);
-        } catch (checkErr) {
-          console.error('检查收藏状态失败:', checkErr);
+        const record = allRecords[key] || null;
+        setPlayRecord(record);
+        if (record) {
+          setActiveEpisodeIndex(record.index - 1);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : '获取详情失败');
@@ -84,27 +77,6 @@ function DetailPageClient() {
 
     fetchData();
   }, [searchParams]);
-
-  // 切换收藏状态
-  const handleToggleFavorite = async () => {
-    const source = searchParams.get('source');
-    const id = searchParams.get('id');
-    if (!source || !id || !detail) return;
-
-    try {
-      const newState = await toggleFavorite(source, id, {
-        title: detail.title,
-        source_name: detail.source_name,
-        year: detail.year || fallbackYear || '',
-        cover: detail.poster || '',
-        total_episodes: detail.episodes.length || 1,
-        save_time: Date.now(),
-      });
-      setFavorited(newState);
-    } catch (err) {
-      console.error('切换收藏失败:', err);
-    }
-  };
 
   return (
     <PageLayout activePath='/detail'>
@@ -121,7 +93,7 @@ function DetailPageClient() {
               <div className='text-sm'>{error}</div>
             </div>
           </div>
-        ) : !detail ? (
+        ) : !detail || !detail.videoInfo ? (
           <div className='flex items-center justify-center min-h-[60vh]'>
             <div className='text-gray-500 text-center'>
               <div className='text-lg font-semibold mb-2'>未找到视频详情</div>
@@ -156,8 +128,8 @@ function DetailPageClient() {
               {/* 封面 */}
               <div className='flex-shrink-0 w-full max-w-[200px] sm:max-w-none md:w-72 mx-auto'>
                 <Image
-                  src={detail.poster || '/images/placeholder.png'}
-                  alt={detail.title || fallbackTitle}
+                  src={detail.videoInfo.cover || '/images/placeholder.png'}
+                  alt={detail.videoInfo.title || fallbackTitle}
                   width={288}
                   height={432}
                   className='w-full rounded-xl object-cover'
@@ -172,23 +144,25 @@ function DetailPageClient() {
                 style={{ height: '430px' }}
               >
                 <h1 className='text-3xl font-bold mb-2 tracking-wide flex items-center flex-shrink-0 text-center md:text-left w-full'>
-                  {detail.title || fallbackTitle}
+                  {detail.videoInfo.title || fallbackTitle}
                 </h1>
                 <div className='flex flex-wrap items-center gap-3 text-base mb-4 opacity-80 flex-shrink-0'>
-                  {detail.class && (
+                  {detail.videoInfo.type && (
                     <span className='text-green-600 font-semibold'>
-                      {detail.class}
+                      {detail.videoInfo.type}
                     </span>
                   )}
-                  {(detail.year || fallbackYear) && (
-                    <span>{detail.year || fallbackYear}</span>
+                  {(detail.videoInfo.year || fallbackYear) && (
+                    <span>{detail.videoInfo.year || fallbackYear}</span>
                   )}
-                  {detail.source_name && (
+                  {detail.videoInfo.source_name && (
                     <span className='border border-gray-500/60 px-2 py-[1px] rounded'>
-                      {detail.source_name}
+                      {detail.videoInfo.source_name}
                     </span>
                   )}
-                  {detail.type_name && <span>{detail.type_name}</span>}
+                  {detail.videoInfo.remarks && (
+                    <span>{detail.videoInfo.remarks}</span>
+                  )}
                 </div>
                 {/* 按钮区域 */}
                 <div className='flex items-center gap-4 mb-4 flex-shrink-0'>
@@ -200,9 +174,9 @@ function DetailPageClient() {
                           'source'
                         )}&id=${searchParams.get(
                           'id'
-                        )}&title=${encodeURIComponent(detail.title)}${
-                          detail.year || fallbackYear
-                            ? `&year=${detail.year || fallbackYear}`
+                        )}&title=${encodeURIComponent(detail.videoInfo.title)}${
+                          detail.videoInfo.year || fallbackYear
+                            ? `&year=${detail.videoInfo.year || fallbackYear}`
                             : ''
                         }`}
                         className='flex items-center justify-center gap-2 px-6 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors text-white'
@@ -217,10 +191,10 @@ function DetailPageClient() {
                         )}&id=${searchParams.get(
                           'id'
                         )}&index=1&position=0&title=${encodeURIComponent(
-                          detail.title
+                          detail.videoInfo.title
                         )}${
-                          detail.year || fallbackYear
-                            ? `&year=${detail.year || fallbackYear}`
+                          detail.videoInfo.year || fallbackYear
+                            ? `&year=${detail.videoInfo.year || fallbackYear}`
                             : ''
                         }`}
                         className='hidden sm:flex items-center justify-center gap-2 px-6 py-2 bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-white'
@@ -238,10 +212,10 @@ function DetailPageClient() {
                         )}&id=${searchParams.get(
                           'id'
                         )}&index=1&position=0&title=${encodeURIComponent(
-                          detail.title
+                          detail.videoInfo.title
                         )}${
-                          detail.year || fallbackYear
-                            ? `&year=${detail.year || fallbackYear}`
+                          detail.videoInfo.year || fallbackYear
+                            ? `&year=${detail.videoInfo.year || fallbackYear}`
                             : ''
                         }`}
                         className='flex items-center justify-center gap-2 px-6 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors text-white'
@@ -252,21 +226,17 @@ function DetailPageClient() {
                     </>
                   )}
                   {/* 爱心按钮 */}
-                  <button
-                    onClick={handleToggleFavorite}
-                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
-                      favorited
-                        ? 'bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500'
-                        : 'bg-gray-400 hover:bg-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    <Heart
-                      className={`h-5 w-5 stroke-[2] ${
-                        favorited ? 'text-red-500' : 'text-white'
-                      }`}
-                      fill={favorited ? 'currentColor' : 'none'}
-                    />
-                  </button>
+                  <FavoriteButton
+                    source={searchParams.get('source')!}
+                    id={searchParams.get('id')!}
+                    favoriteData={{
+                      title: detail.videoInfo.title,
+                      source_name: detail.videoInfo.source_name,
+                      year: detail.videoInfo.year || fallbackYear || '',
+                      cover: detail.videoInfo.cover || '',
+                      total_episodes: detail.episodes.length || 1,
+                    }}
+                  />
                 </div>
                 {/* 播放记录进度条 */}
                 {playRecord && (
@@ -293,12 +263,12 @@ function DetailPageClient() {
                     </span>
                   </div>
                 )}
-                {detail.desc && (
+                {detail.videoInfo.desc && (
                   <div
                     className='mt-0 text-base leading-relaxed opacity-90 overflow-y-auto pr-2 flex-1 min-h-0 scrollbar-hide'
                     style={{ whiteSpace: 'pre-line' }}
                   >
-                    {detail.desc}
+                    {detail.videoInfo.desc}
                   </div>
                 )}
               </div>
@@ -336,16 +306,22 @@ function DetailPageClient() {
                   ).map((idx) => (
                     <a
                       key={idx}
+                      className={`px-5 py-2 rounded-lg transition-colors text-base font-medium w-24 text-center ${
+                        idx === activeEpisodeIndex
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-500/80 hover:bg-green-500 dark:bg-gray-700/80 dark:hover:bg-green-600 text-white'
+                      }`}
                       href={`/play?source=${searchParams.get(
                         'source'
                       )}&id=${searchParams.get('id')}&index=${
                         idx + 1
-                      }&position=0&title=${encodeURIComponent(detail.title)}${
-                        detail.year || fallbackYear
-                          ? `&year=${detail.year || fallbackYear}`
+                      }&position=0&title=${encodeURIComponent(
+                        detail.videoInfo.title
+                      )}${
+                        detail.videoInfo.year || fallbackYear
+                          ? `&year=${detail.videoInfo.year || fallbackYear}`
                           : ''
                       }`}
-                      className='bg-gray-500/80 hover:bg-green-500 dark:bg-gray-700/80 dark:hover:bg-green-600 text-white px-5 py-2 rounded-lg transition-colors text-base font-medium w-24 text-center'
                     >
                       {idx + 1}
                     </a>

@@ -8,6 +8,7 @@ import { Suspense, useEffect, useState } from 'react';
 
 import { SearchResult } from '@/lib/types';
 
+import { FavoriteButton } from '@/components/FavoriteButton';
 import PageLayout from '@/components/PageLayout';
 
 function AggregatePageClient() {
@@ -175,6 +176,21 @@ function AggregatePageClient() {
                   )}
                   {aggregatedInfo.year && <span>{aggregatedInfo.year}</span>}
                   {aggregatedInfo.type && <span>{aggregatedInfo.type}</span>}
+                </div>
+                <div className="flex items-center gap-4 mb-4">
+                  {uniqueSources.length > 0 && (
+                    <FavoriteButton
+                      source={uniqueSources[0]?.source}
+                      id={uniqueSources[0]?.id}
+                      favoriteData={{
+                        title: aggregatedInfo.title,
+                        source_name: uniqueSources[0]?.source_name,
+                        year: aggregatedInfo.year || '',
+                        cover: aggregatedInfo.cover || '',
+                        total_episodes: uniqueSources.reduce((acc, s) => acc + s.episodes.length, 0),
+                      }}
+                    />
+                  )}
                 </div>
                 <div
                   className='mt-0 text-base leading-relaxed opacity-90 overflow-y-auto pr-2 flex-1 min-h-0 scrollbar-hide'

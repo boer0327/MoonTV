@@ -9,6 +9,19 @@ export interface VideoDetail {
   year: string;
   desc?: string;
   type_name?: string;
+  videoInfo: VideoInfo;
+}
+
+interface VideoInfo {
+  title: string;
+  cover: string;
+  desc: string;
+  type: string;
+  year: string;
+  source_name: string;
+  source: string;
+  id: string;
+  remarks: string; // Map class to remarks
 }
 
 interface FetchVideoDetailOptions {
@@ -43,7 +56,23 @@ export async function fetchVideoDetail({
             item.id.toString() === id.toString()
         );
         if (exactMatch) {
-          return exactMatch as VideoDetail;
+          // Transform SearchResult to VideoDetail structure
+          return {
+            code: 200, // Assuming success
+            episodes: exactMatch.episodes || [],
+            detailUrl: '', // Not available from search result
+            videoInfo: {
+              title: exactMatch.title,
+              cover: exactMatch.poster,
+              desc: exactMatch.desc,
+              type: exactMatch.type_name,
+              year: exactMatch.year,
+              source_name: exactMatch.source_name,
+              source: exactMatch.source,
+              id: exactMatch.id,
+              remarks: exactMatch.class, // Map class to remarks
+            },
+          } as VideoDetail;
         }
       }
     } catch (error) {
@@ -58,7 +87,7 @@ export async function fetchVideoDetail({
   }
   const data = await response.json();
 
-  return {
+  const result: VideoDetail = {
     id: data?.videoInfo?.id || id,
     title: data?.videoInfo?.title || fallbackTitle,
     poster: data?.videoInfo?.cover || '',
@@ -69,5 +98,6 @@ export async function fetchVideoDetail({
     year: data?.videoInfo?.year || fallbackYear || '',
     desc: data?.videoInfo?.desc || '',
     type_name: data?.videoInfo?.type || '',
-  } as VideoDetail;
+  };
+  return result;
 }

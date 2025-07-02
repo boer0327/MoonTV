@@ -19,6 +19,7 @@ export interface PlayRecord {
   source_name: string;
   year: string;
   cover: string;
+  poster: string;
   index: number; // 第几集
   total_episodes: number; // 总集数
   play_time: number; // 播放进度（秒）
@@ -31,11 +32,7 @@ export interface PlayRecord {
 const PLAY_RECORDS_KEY = 'moontv_play_records';
 
 // ---- 环境变量 ----
-const STORAGE_TYPE =
-  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
-    | 'localstorage'
-    | 'database'
-    | undefined) || 'localstorage';
+const STORAGE_TYPE = 'localstorage';
 
 // ---------------- 搜索历史相关常量 ----------------
 const SEARCH_HISTORY_KEY = 'moontv_search_history';
@@ -267,17 +264,6 @@ export async function clearSearchHistory(): Promise<void> {
 
 // ---------------- 收藏相关 API ----------------
 
-// 收藏数据结构
-export interface Favorite {
-  title: string;
-  source_name: string;
-  year: string;
-  cover: string;
-  total_episodes: number;
-  save_time: number;
-  user_id: number; // 本地存储情况下恒为 0
-}
-
 // 收藏在 localStorage 中使用的 key
 const FAVORITES_KEY = 'moontv_favorites';
 
@@ -314,7 +300,7 @@ export async function saveFavorite(
   favorite: Omit<Favorite, 'user_id'>
 ): Promise<void> {
   const key = generateStorageKey(source, id);
-  const fullFavorite: Favorite = { ...favorite, user_id: 0 };
+  const fullFavorite: Favorite = { ...favorite, user_id: 0, source, id };
 
   // 数据库模式
   if (STORAGE_TYPE === 'database') {

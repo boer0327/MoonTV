@@ -43,52 +43,7 @@ async function fetchDoubanData(url: string): Promise<DoubanApiResponse> {
   }
 }
 
-export const runtime = 'edge';
-
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-
-  // 获取参数
-  const type = searchParams.get('type');
-  const tag = searchParams.get('tag');
-  const pageSize = parseInt(searchParams.get('pageSize') || '16');
-  const pageStart = parseInt(searchParams.get('pageStart') || '0');
-
-  // 验证参数
-  if (!type || !tag) {
-    return NextResponse.json(
-      { error: '缺少必要参数: type 或 tag' },
-      { status: 400 }
-    );
-  }
-
-  if (!['tv', 'movie'].includes(type)) {
-    return NextResponse.json(
-      { error: 'type 参数必须是 tv 或 movie' },
-      { status: 400 }
-    );
-  }
-
-  if (pageSize < 1 || pageSize > 100) {
-    return NextResponse.json(
-      { error: 'pageSize 必须在 1-100 之间' },
-      { status: 400 }
-    );
-  }
-
-  if (pageStart < 0) {
-    return NextResponse.json(
-      { error: 'pageStart 不能小于 0' },
-      { status: 400 }
-    );
-  }
-
-  if (tag === 'top250') {
-    return handleTop250(pageStart);
-  }
-
-  const target = `https://movie.douban.com/j/search_subjects?type=${type}&tag=${tag}&sort=recommend&page_limit=${pageSize}&page_start=${pageStart}`;
-
+async function handleDoubanApi(target: string): Promise<NextResponse> {
   try {
     // 调用豆瓣 API
     const doubanData = await fetchDoubanData(target);
@@ -118,6 +73,64 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
+}
+
+export const runtime = 'edge';
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+
+  // 获取参数
+  const type = searchParams.get('type');
+  const tag = searchParams.get('tag');
+  const pageSize = parseInt(searchParams.get('pageSize') || '16');
+  const pageStart = parseInt(searchParams.get('pageStart') || '0');
+
+  // 验证参数
+  if (!tag) {
+    return NextResponse.json({ error: '缺少必要参数: tag' }, { status: 400 });
+  }
+
+  if (pageSize < 1 || pageSize > 100) {
+    return NextResponse.json(
+      { error: 'pageSize 必须在 1-100 之间' },
+      { status: 400 }
+    );
+  }
+
+  if (pageStart < 0) {
+    return NextResponse.json(
+      { error: 'pageStart 不能小于 0' },
+      { status: 400 }
+    );
+  }
+
+  if (tag === 'top250') {
+    return handleTop250(pageStart);
+  }
+
+  // 新增热门国漫API
+  if (tag === 'hot_chinese_anime') {
+    const target = `https://movie.douban.com/j/search_subjects?type=tv&tag=国产动画&sort=recommend&page_limit=${pageSize}&page_start=${pageStart}`;
+    return handleDoubanApi(target);
+  }
+
+  if (!type) {
+    return NextResponse.json(
+      { error: '缺少必要参数: type' },
+      { status: 400 }
+    );
+  }
+
+  if (!['tv', 'movie'].includes(type)) {
+    return NextResponse.json(
+      { error: 'type 参数必须是 tv 或 movie' },
+      { status: 400 }
+    );
+  }
+
+  const target = `https://movie.douban.com/j/search_subjects?type=${type}&tag=${tag}&sort=recommend&page_limit=${pageSize}&page_start=${pageStart}`;
+  return handleDoubanApi(target);
 }
 
 function handleTop250(pageStart: number) {

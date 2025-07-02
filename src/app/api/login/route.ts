@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { SignJWT } from 'jose';
 
 export const runtime = 'edge';
+
+const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'your-super-secret-jwt-key');
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,7 +27,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ ok: true });
+    // Create JWT
+    const token = await new SignJWT({ 'urn:example:claim': true })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('2h')
+      .sign(secret);
+
+    const response = NextResponse.json({ ok: true });
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 2, // 2 hours
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
     return NextResponse.json({ error: '服务器错误' }, { status: 500 });
   }

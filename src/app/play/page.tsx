@@ -303,7 +303,7 @@ function PlayPageClient() {
 
   // 播放器事件处理
   const onCanPlay = () => {
-    console.log('播放器准备就绪');
+    console.log('播放器准备就绪', playerRef.current);
     setError(null);
 
     // 若存在需要恢复的播放进度，则跳转
@@ -718,13 +718,13 @@ function PlayPageClient() {
   };
 
   // 保存播放进度的函数
-  const saveCurrentPlayProgress = async () => {
+  const saveCurrentPlayProgress = useCallback(async () => {
     if (
       !playerRef.current ||
       !currentSourceRef.current ||
       !currentIdRef.current ||
       !videoTitleRef.current ||
-      !detailRef.current?.source_name
+      !detail?.videoInfo?.source_name // Use detail directly
     ) {
       return;
     }
@@ -741,26 +741,22 @@ function PlayPageClient() {
     try {
       await savePlayRecord(currentSourceRef.current, currentIdRef.current, {
         title: videoTitleRef.current,
-        source_name: detailRef.current?.source_name,
-        cover: videoCover,
-        year: detailRef.current?.year || videoYear || '',
+        source_name: detail.videoInfo.source_name, // Use detail directly
+        cover: detail.videoInfo.cover || detail.poster || videoCover,
+        year: detail.videoInfo.year || videoYear || '', // Use detail directly
         index: currentEpisodeIndexRef.current + 1, // 转换为1基索引
         total_episodes: totalEpisodes,
         play_time: Math.floor(currentTime),
         total_time: Math.floor(duration),
         save_time: Date.now(),
+        poster: detail.poster,
       });
 
       lastSaveTimeRef.current = Date.now();
-      console.log('播放进度已保存:', {
-        title: videoTitleRef.current,
-        episode: currentEpisodeIndexRef.current + 1,
-        progress: `${Math.floor(currentTime)}/${Math.floor(duration)}`,
-      });
     } catch (err) {
       console.error('保存播放进度失败:', err);
     }
-  };
+  }, [detail, videoCover, videoYear, totalEpisodes]); // Add dependencies
 
   // 每当 source 或 id 变化时检查收藏状态
   useEffect(() => {

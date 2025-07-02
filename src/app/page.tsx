@@ -6,8 +6,7 @@ import { Suspense, useEffect, useState } from 'react';
 
 // 客户端收藏 API
 import { clearAllFavorites, getAllFavorites } from '@/lib/db.client';
-import { DoubanItem, DoubanResult } from '@/lib/types';
-
+import { DoubanItem, DoubanResult, Favorite } from '@/lib/types';
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import ContinueWatching from '@/components/ContinueWatching';
 import DemoCard from '@/components/DemoCard';
@@ -22,16 +21,7 @@ function HomeClient() {
   const [loading, setLoading] = useState(true);
 
   // 收藏夹数据
-  type FavoriteItem = {
-    id: string;
-    source: string;
-    title: string;
-    poster: string;
-    episodes: number;
-    source_name: string;
-  };
-
-  const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
+  const [favoriteItems, setFavoriteItems] = useState<Favorite[]>([]);
 
   useEffect(() => {
     const fetchDoubanData = async () => {
@@ -61,15 +51,11 @@ function HomeClient() {
     fetchDoubanData();
   }, []);
 
-  // 当切换到收藏夹时加载收藏数据
   useEffect(() => {
-    if (activeTab !== 'favorites') return;
-
-    (async () => {
-      const all = await getAllFavorites();
-      // 根据保存时间排序（从近到远）
-      const sorted = Object.entries(all)
-        .sort(([, a], [, b]) => b.save_time - a.save_time)
+    const fetchFavorites = async () => {
+      const data = await getAllFavorites();
+      const sorted = Object.entries(data)
+        .sort(([, a], [, b]) => (b as any).save_time - (a as any).save_time)
         .map(([key, fav]) => {
           const plusIndex = key.indexOf('+');
           const source = key.slice(0, plusIndex);
@@ -77,16 +63,31 @@ function HomeClient() {
           return {
             id,
             source,
-            title: fav.title,
-            year: fav.year,
-            poster: fav.cover,
-            episodes: fav.total_episodes,
-            source_name: fav.source_name,
-          } as FavoriteItem;
+            ...fav,
+          } as unknown as Favorite;
         });
       setFavoriteItems(sorted);
-    })();
+    };
+
+    if (activeTab === 'favorites') {
+      fetchFavorites();
+    }
+
+    const handleFavoritesUpdated = () => {
+      if (activeTab === 'favorites') {
+        fetchFavorites();
+      }
+    };
+
+    window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
+
+    return () => {
+      window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
+    };
   }, [activeTab]);
+
+  
+
 
   return (
     <PageLayout>
@@ -124,9 +125,18 @@ function HomeClient() {
                 )}
               </div>
               <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'>
-                {favoriteItems.map((item) => (
+                {favoriteItems.map((item: Favorite) => (
                   <div key={item.id + item.source} className='w-full'>
-                    <VideoCard {...item} from='favorites' />
+                    <VideoCard
+                      id={item.id}
+                      source={item.source}
+                      title={item.title}
+                      poster={item.cover}
+                      episodes={item.total_episodes}
+                      source_name={item.source_name}
+                      year={item.year}
+                      from='favorites'
+                    />
                   </div>
                 ))}
                 {favoriteItems.length === 0 && (

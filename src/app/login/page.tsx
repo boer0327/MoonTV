@@ -81,6 +81,12 @@ function LoginPageClient() {
           >
             {loading ? '登录中...' : '登录'}
           </button>
+          <p className="text-center text-sm text-gray-500">
+            Don't have an account?{' '}
+            <a href="/signup" className="font-semibold leading-6 text-green-600 hover:text-green-500">
+              Sign up
+            </a>
+          </p>
         </form>
       </div>
     </div>
