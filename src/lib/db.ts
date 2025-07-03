@@ -1,10 +1,9 @@
 /* eslint-disable no-console */
 
-import { PlayRecord, Favorite } from './types';
+import { Favorite, PlayRecord } from './types';
 
 // storage type 常量: 'localstorage' | 'database'，默认 'localstorage'
 const STORAGE_TYPE = 'localstorage';
-
 
 // 存储接口
 export interface IStorage {
@@ -66,7 +65,7 @@ class DatabaseStorage implements IStorage {
 
 // 创建存储实例
 function createStorage(): IStorage {
-  switch (STORAGE_TYPE) {
+  switch (String(STORAGE_TYPE)) {
     case 'database':
       return new DatabaseStorage();
     case 'localstorage':

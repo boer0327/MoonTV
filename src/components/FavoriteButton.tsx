@@ -1,8 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
-import { toggleFavorite, isFavorited, generateStorageKey } from '@/lib/db.client';
+import { useEffect, useState } from 'react';
+
+import {
+  generateStorageKey,
+  isFavorited,
+  toggleFavorite,
+} from '@/lib/db.client';
 
 interface FavoriteButtonProps {
   source: string;
@@ -16,12 +21,16 @@ interface FavoriteButtonProps {
   };
 }
 
-export function FavoriteButton({ source, id, favoriteData }: FavoriteButtonProps) {
+export function FavoriteButton({
+  source,
+  id,
+  favoriteData,
+}: FavoriteButtonProps) {
   const [favorited, setFavorited] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    isFavorited(source, id).then(fav => {
+    isFavorited(source, id).then((fav) => {
       setFavorited(fav);
       setLoading(false);
     });
@@ -32,6 +41,7 @@ export function FavoriteButton({ source, id, favoriteData }: FavoriteButtonProps
       const newState = await toggleFavorite(source, id, {
         ...favoriteData,
         save_time: Date.now(),
+        id,
       });
       setFavorited(newState);
 
@@ -44,7 +54,10 @@ export function FavoriteButton({ source, id, favoriteData }: FavoriteButtonProps
         await fetch('/api/favorites', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key, favorite: { ...favoriteData, source, id, save_time: Date.now() } }),
+          body: JSON.stringify({
+            key,
+            favorite: { ...favoriteData, source, id, save_time: Date.now() },
+          }),
         });
       } else {
         await fetch(`/api/favorites?key=${key}`, {
@@ -59,7 +72,7 @@ export function FavoriteButton({ source, id, favoriteData }: FavoriteButtonProps
 
   if (loading) {
     return (
-      <button className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-400 animate-pulse" />
+      <button className='flex items-center justify-center w-10 h-10 rounded-full bg-gray-400 animate-pulse' />
     );
   }
 

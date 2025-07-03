@@ -13,6 +13,8 @@
  * 如后续需要在客户端读取收藏等其它数据，可按同样方式在此文件中补充实现。
  */
 
+import { Favorite } from './types';
+
 // ---- 类型 ----
 export interface PlayRecord {
   title: string;
@@ -61,7 +63,7 @@ export function generateStorageKey(source: string, id: string): string {
  */
 export async function getAllPlayRecords(): Promise<Record<string, PlayRecord>> {
   // 若配置标明使用数据库，则从后端 API 拉取
-  if (STORAGE_TYPE === 'database') {
+  if (String(STORAGE_TYPE) === 'database') {
     return fetchFromApi<Record<string, PlayRecord>>('/api/playrecords');
   }
 
@@ -93,7 +95,7 @@ export async function savePlayRecord(
   const fullRecord: PlayRecord = { ...record, user_id: 0 };
 
   // 若配置标明使用数据库，则通过 API 保存
-  if (STORAGE_TYPE === 'database') {
+  if (String(STORAGE_TYPE) === 'database') {
     try {
       const res = await fetch('/api/playrecords', {
         method: 'POST',
@@ -136,7 +138,7 @@ export async function deletePlayRecord(
   const key = generateStorageKey(source, id);
 
   // 若配置标明使用数据库，则通过 API 删除
-  if (STORAGE_TYPE === 'database') {
+  if (String(STORAGE_TYPE) === 'database') {
     try {
       const res = await fetch(
         `/api/playrecords?key=${encodeURIComponent(key)}`,
@@ -176,7 +178,7 @@ export async function deletePlayRecord(
  */
 export async function getSearchHistory(): Promise<string[]> {
   // 如果配置为使用数据库，则从后端 API 获取
-  if (STORAGE_TYPE === 'database') {
+  if (String(STORAGE_TYPE) === 'database') {
     try {
       return fetchFromApi<string[]>('/api/searchhistory');
     } catch (err) {
@@ -210,7 +212,7 @@ export async function addSearchHistory(keyword: string): Promise<void> {
   if (!trimmed) return;
 
   // 数据库模式
-  if (STORAGE_TYPE === 'database') {
+  if (String(STORAGE_TYPE) === 'database') {
     try {
       await fetch('/api/searchhistory', {
         method: 'POST',
@@ -246,7 +248,7 @@ export async function addSearchHistory(keyword: string): Promise<void> {
  */
 export async function clearSearchHistory(): Promise<void> {
   // 数据库模式
-  if (STORAGE_TYPE === 'database') {
+  if (String(STORAGE_TYPE) === 'database') {
     try {
       await fetch('/api/searchhistory', {
         method: 'DELETE',
@@ -272,7 +274,7 @@ const FAVORITES_KEY = 'moontv_favorites';
  */
 export async function getAllFavorites(): Promise<Record<string, Favorite>> {
   // 数据库模式
-  if (STORAGE_TYPE === 'database') {
+  if (String(STORAGE_TYPE) === 'database') {
     return fetchFromApi<Record<string, Favorite>>('/api/favorites');
   }
 
@@ -303,7 +305,7 @@ export async function saveFavorite(
   const fullFavorite: Favorite = { ...favorite, user_id: 0, source, id };
 
   // 数据库模式
-  if (STORAGE_TYPE === 'database') {
+  if (String(STORAGE_TYPE) === 'database') {
     try {
       const res = await fetch('/api/favorites', {
         method: 'POST',
@@ -346,7 +348,7 @@ export async function deleteFavorite(
   const key = generateStorageKey(source, id);
 
   // 数据库模式
-  if (STORAGE_TYPE === 'database') {
+  if (String(STORAGE_TYPE) === 'database') {
     try {
       const res = await fetch(`/api/favorites?key=${encodeURIComponent(key)}`, {
         method: 'DELETE',
@@ -385,7 +387,7 @@ export async function isFavorited(
   const key = generateStorageKey(source, id);
 
   // 数据库模式
-  if (STORAGE_TYPE === 'database') {
+  if (String(STORAGE_TYPE) === 'database') {
     try {
       const res = await fetch(`/api/favorites?key=${encodeURIComponent(key)}`);
       if (!res.ok) return false;
@@ -431,7 +433,7 @@ export async function toggleFavorite(
  */
 export async function clearAllPlayRecords(): Promise<void> {
   // 数据库模式
-  if (STORAGE_TYPE === 'database') {
+  if (String(STORAGE_TYPE) === 'database') {
     try {
       await fetch('/api/playrecords', {
         method: 'DELETE',
@@ -452,7 +454,7 @@ export async function clearAllPlayRecords(): Promise<void> {
  */
 export async function clearAllFavorites(): Promise<void> {
   // 数据库模式
-  if (STORAGE_TYPE === 'database') {
+  if (String(STORAGE_TYPE) === 'database') {
     try {
       await fetch('/api/favorites', {
         method: 'DELETE',

@@ -72,7 +72,7 @@ export async function fetchVideoDetail({
               id: exactMatch.id,
               remarks: exactMatch.class, // Map class to remarks
             },
-          } as VideoDetail;
+          } as unknown as VideoDetail;
         }
       }
     } catch (error) {
@@ -98,6 +98,7 @@ export async function fetchVideoDetail({
     year: data?.videoInfo?.year || fallbackYear || '',
     desc: data?.videoInfo?.desc || '',
     type_name: data?.videoInfo?.type || '',
+    videoInfo: data?.videoInfo,
   };
   return result;
 }

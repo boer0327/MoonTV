@@ -7,6 +7,7 @@ import { Suspense, useEffect, useState } from 'react';
 // 客户端收藏 API
 import { clearAllFavorites, getAllFavorites } from '@/lib/db.client';
 import { DoubanItem, DoubanResult, Favorite } from '@/lib/types';
+
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import ContinueWatching from '@/components/ContinueWatching';
 import DemoCard from '@/components/DemoCard';
@@ -61,8 +62,8 @@ function HomeClient() {
           const source = key.slice(0, plusIndex);
           const id = key.slice(plusIndex + 1);
           return {
-            id,
-            source,
+            // id,
+            // source,
             ...fav,
           } as unknown as Favorite;
         });
@@ -85,9 +86,6 @@ function HomeClient() {
       window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
     };
   }, [activeTab]);
-
-  
-
 
   return (
     <PageLayout>
@@ -129,7 +127,7 @@ function HomeClient() {
                   <div key={item.id + item.source} className='w-full'>
                     <VideoCard
                       id={item.id}
-                      source={item.source}
+                      source={item.source || ''}
                       title={item.title}
                       poster={item.cover}
                       episodes={item.total_episodes}

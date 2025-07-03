@@ -64,7 +64,7 @@ export interface Favorite {
   total_episodes: number;
   save_time: number;
   user_id: number; // 本地存储情况下恒为 0
-  source: string; // Add source
+  source?: string; // Add source
   id: string; // Add id
 }
 

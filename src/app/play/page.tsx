@@ -783,6 +783,8 @@ function PlayPageClient() {
         cover: videoCover || '',
         total_episodes: totalEpisodes || 1,
         save_time: Date.now(),
+        source: detail?.source || '',
+        id: detail?.id || '',
       });
       setFavorited(newState);
     } catch (err) {

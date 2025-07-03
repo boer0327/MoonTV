@@ -1,6 +1,6 @@
 {
-  "name": "MoonTV",
-  "short_name": "MoonTV",
+  "name": "FunTV",
+  "short_name": "FunTV",
   "description": "影视聚合",
   "start_url": "/",
   "scope": "/",

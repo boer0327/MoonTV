@@ -118,6 +118,7 @@ export default function VideoCard({
         cover: poster,
         total_episodes: episodes ?? 1,
         save_time: Date.now(),
+        id,
       });
       setFavorited(newState);
     } catch (err) {
