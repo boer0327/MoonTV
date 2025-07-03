@@ -1,11 +1,13 @@
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'your-super-secret-jwt-key');
+const secret = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-super-secret-jwt-key'
+);
 const a = 1;
 export async function middleware(request: NextRequest) {
+  console.log('enter to middleware');
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('token')?.value;
 
@@ -13,7 +15,7 @@ export async function middleware(request: NextRequest) {
   const publicPaths = ['/login', '/signup', '/api/login', '/api/signup'];
 
   // If the path is public, let the request through
-  if (publicPaths.some(path => pathname.startsWith(path))) {
+  if (publicPaths.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
   }
 

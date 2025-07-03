@@ -12,27 +12,21 @@ export default function AuthProvider({ children }: Props) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // 登录页或 API 路径不做校验，避免死循环
-    if (pathname.startsWith('/login')) return;
+    // 登录页、注册页或 API 路径不做校验，避免死循环
+    if (pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/api')) return;
 
-    const password = localStorage.getItem('password');
     const fullPath =
       typeof window !== 'undefined'
         ? window.location.pathname + window.location.search
         : pathname;
 
-    // 有密码时验证
+    // 验证 JWT
     (async () => {
       try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password }),
-        });
+        const res = await fetch('/api/auth/check');
 
         if (!res.ok) {
-          // 校验未通过，清理并跳转登录
-          localStorage.removeItem('password');
+          // 校验未通过，跳转登录
           router.replace(`/login?redirect=${encodeURIComponent(fullPath)}`);
         }
       } catch (error) {
